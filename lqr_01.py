@@ -19,9 +19,9 @@ class system:
         self.C = np.array([[1,0],[0,1]])
         self.D = np.array([[0,0]]).T
         self.x = np.array([0,0])[None].T
-        self.delta = 1
+        self.delta = 1e-2
         self.discretize(self.delta)
-
+        self.lqr(np.eye(2)*100,np.eye(1))
     def discretize(self, delta):
         self.delta = delta
         self.Ad = scipy.linalg.expm(self.A*delta)
@@ -41,6 +41,7 @@ class system:
         self.x = init
         u = np.array([[0]])
         for i in np.arange(0,time,self.delta):
+            u = -self.K@self.x
             self.y = self.Cd@self.x + self.Dd@u
             out = np.vstack((out, np.squeeze(self.y)))
             self.iterate(u)
@@ -48,25 +49,24 @@ class system:
 
 
 
-def lqr(A,B,Q,R):
-    """Solve the continuous time lqr controller.
-     
-    dx/dt = A x + B u
-     
-    cost = integral x.T*Q*x + u.T*R*u
-    """
-    #ref Bertsekas, p.151
-     
-    #first, try to solve the ricatti equation
-    X = np.matrix(scipy.linalg.solve_continuous_are(A, B, Q, R))
-     
-    #compute the LQR gain
-    K = np.matrix(scipy.linalg.inv(R)@(B.T@X))
-     
-    eigVals, eigVecs = scipy.linalg.eig(A-B@K)
-     
-    return K, X, eigVals
-    
+    def lqr(self, Q,R):
+        """Solve the continuous time lqr controller.
+         
+        dx/dt = A x + B u
+         
+        cost = integral x.T*Q*x + u.T*R*u
+        """
+        #ref Bertsekas, p.151
+         
+        #first, try to solve the ricatti equation
+        X = np.matrix(scipy.linalg.solve_continuous_are(self.A, self.B, Q, R))
+         
+        #compute the LQR gain
+        self.K = np.matrix(scipy.linalg.inv(R)@(self.B.T@X))
+         
+        # eigVals, eigVecs = scipy.linalg.eig(A-B@K)
+         
+
 sys = system()
-out = sys.simluate(np.array([[1],[0]]), 100)
+out = sys.simluate(np.array([[1],[0]]), 10)
 plt.plot(out[:,0])
