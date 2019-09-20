@@ -60,6 +60,7 @@ class system:
          
         #first, try to solve the ricatti equation
         X = np.matrix(scipy.linalg.solve_continuous_are(self.A, self.B, Q, R))
+        # X = np.matrix(scipy.linalg.solve_discrete_are(self.A, self.B, Q, R))
          
         #compute the LQR gain
         self.K = np.matrix(scipy.linalg.inv(R)@(self.B.T@X))
