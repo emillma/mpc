@@ -14,14 +14,15 @@ from matplotlib import pyplot as plt
 
 class system:
     def __init__(self):
-        self.A = np.array([[0,1],[-1,0]])
-        self.B = np.array([0,1])[None].T
-        self.C = np.array([[1,0],[0,1]])
-        self.D = np.array([[0,0]]).T
-        self.x = np.array([0,0])[None].T
+        self.A = np.array([[0,1],[-1,0]], dtype = np.float64)
+        self.B = np.array([[0],[1]], dtype = np.float64)
+        self.C = np.array([[1,0],[0,1]], dtype = np.float64)
+        self.D = np.array([[0],[0]], dtype = np.float64)
+        self.x = np.array([[0],[0]], dtype = np.float64)
         self.delta = 1e-2
         self.discretize(self.delta)
-        self.lqr(np.eye(2)*100,np.eye(1))
+        self.lqr(np.diag(np.array([100,1])),np.diag(np.array([0.01])))
+
     def discretize(self, delta):
         self.delta = delta
         self.Ad = scipy.linalg.expm(self.A*delta)
@@ -41,7 +42,7 @@ class system:
         self.x = init
         u = np.array([[0]])
         for i in np.arange(0,time,self.delta):
-            u = -self.K@self.x
+            u = -self.K@(self.x - np.array([[-1],[0]]))
             self.y = self.Cd@self.x + self.Dd@u
             out = np.vstack((out, np.squeeze(self.y)))
             self.iterate(u)
