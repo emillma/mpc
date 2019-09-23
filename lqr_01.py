@@ -52,22 +52,22 @@ class system:
 
     def lqr(self, Q,R):
         """Solve the continuous time lqr controller.
-         
+
         dx/dt = A x + B u
-         
+
         cost = integral x.T*Q*x + u.T*R*u
         """
         #ref Bertsekas, p.151
-         
+
         #first, try to solve the ricatti equation
         X = np.matrix(scipy.linalg.solve_continuous_are(self.A, self.B, Q, R))
         # X = np.matrix(scipy.linalg.solve_discrete_are(self.A, self.B, Q, R))
-         
+
         #compute the LQR gain
         self.K = np.matrix(scipy.linalg.inv(R)@(self.B.T@X))
-         
+
         # eigVals, eigVecs = scipy.linalg.eig(A-B@K)
-         
+
 
 sys = system()
 out = sys.simluate(np.array([[1],[0]]), 10)

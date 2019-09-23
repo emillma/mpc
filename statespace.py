@@ -13,17 +13,12 @@ import scipy
 from matplotlib import pyplot as plt
 import quaternion
 from numba import jitclass
-@jitclass
+
+
 class quad(object):
     def __init__(self, m, ix, iy, iz, g = 9.81):
         """
-        X = x, y, z, x', y', z', roll, pitch, yaw, roll', pitch', yaw'
-
-        _w = 
-        _f = frame
-        _d = derivative
-        _dd = double derivative
-        _s = system
+        X = roll, pitch, yaw, p, q, r, u, v, w, x, y, z,
         """
         self.m = float(m)
         self.ix = float(ix)
@@ -32,35 +27,10 @@ class quad(object):
         self.g = float(g)
         self.I = np.diag([ix, iy, iz])
 
+        self.X = np.array([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], dtype = np.float64).T
 
 
-        self.roll = 0.
-        self.pitch = 0.
-        self.yaw = 0.
-        self.p = 0.
-        self.q = 0.
-        self.r = 0.
-        self.u = 1.
-        self.v = 0.
-        self.w = 0.
-        self.x = 0.
-        self.y = 0.
-        self.z = 0.
-
-        self.X = np.array([[self.roll,
-                             self.pitch,
-                             self.yaw,
-                             self.p,
-                             self.q,
-                             self.r,
-                             self.u,
-                             self.v,
-                             self.w,
-                             self.x,
-                             self.y,
-                             self.z]], dtype= np.float64).T
-
-    def get_X_dot(self, ft=0, tx=0, ty=0, tz=0, X = None):
+    def prepare_variables(self, X):
         ix      = self.ix
         iy      = self.iy
         iz      = self.iz
@@ -73,7 +43,6 @@ class quad(object):
         else:
             roll, pitch, yaw, p, q, r, u, v, w, x, y, z = X
 
-
         sin_roll    = np.sin(roll)
         cos_roll    = np.cos(roll)
         sin_pitch   = np.sin(pitch)
@@ -81,52 +50,85 @@ class quad(object):
         tan_pitch   = np.tan(pitch)
         sin_yaw     = np.sin(yaw)
         cos_yaw     = np.cos(yaw)
+        return (ix, iy, iz, g, m,
+                roll, pitch, yaw, p, q, r, u, v, w, x, y, z,
+                sin_roll, cos_roll, sin_pitch, cos_pitch,
+                tan_pitch, sin_yaw, cos_yaw)
 
-        self.roll_d     = p + r * (cos_roll * tan_pitch) + q * (sin_roll * tan_pitch)
-        self.pitch_d    = q * (cos_roll) - r * (sin_pitch)
-        self.yaw_d      = r * (cos_roll / cos_pitch) + q * (sin_roll / cos_pitch)
-        self.p_d        = ((iy - iz) * r * q + tx) / ix
-        self.q_d        = ((iz - ix) * p * r + ty) / iy
-        self.r_d        = ((ix - iy) * p * q + tz) / iz
-        self.u_d        = r * v - q * w - g * sin_pitch
-        self.v_d        = p * w - r * u + g * (sin_roll * cos_pitch)
-        self.w_d        = q * u - p * v + g * (cos_pitch * cos_roll) - ft / m
+    def get_X_dot(self, U = np.array([0,0,0,0], dtype = np.float64), X = None):
+        (ix, iy, iz, g, m,
+        roll, pitch, yaw, p, q, r, u, v, w, x, y, z,
+        sin_roll, cos_roll, sin_pitch, cos_pitch,
+        tan_pitch, sin_yaw, cos_yaw) = self.prepare_variables(X)
 
-        self.x_d        = (w * (sin_roll * sin_yaw + cos_roll * cos_yaw * sin_pitch)
-                          -v * (cos_roll * sin_yaw - cos_yaw * sin_roll * sin_pitch)
-                          +u * (cos_yaw * cos_pitch))
+        ft, tx, ty, tz = U
+        X_dot = np.array([
+        [p + q*sin_roll*tan_pitch + r*cos_roll*tan_pitch, ],
+        [q*cos_roll - r*sin_pitch, ],
+        [(q*sin_roll + r*cos_roll)/cos_pitch, ],
+        [(q*r*(iy - iz) + tx)/ix, ],
+        [(-p*r*(ix - iz) + ty)/iy, ],
+        [(p*q*(ix - iy) + tz)/iz, ],
+        [-g*sin_pitch - q*w + r*v, ],
+        [g*sin_roll*cos_pitch + p*w - r*u, ],
+        [-ft/m + g*cos_pitch*cos_roll - p*v + q*u, ],
+        [u*cos_pitch*cos_yaw + v*(sin_pitch*sin_roll*cos_yaw - sin_yaw*cos_roll) + w*(sin_pitch*cos_roll*cos_yaw + sin_roll*sin_yaw), ],
+        [u*sin_yaw*cos_pitch + v*(sin_pitch*sin_roll*sin_yaw + cos_roll*cos_yaw) + w*(sin_pitch*sin_yaw*cos_roll - sin_roll*cos_yaw), ],
+        [-u*sin_pitch + v*sin_roll*cos_pitch + w*cos_pitch*cos_roll, ],
+        ], dtype = np.float64)
+        return X_dot
 
-        self.y_d        = (v * (cos_roll * cos_yaw + sin_roll * sin_yaw * sin_pitch)
-                          -w * (cos_yaw * sin_roll - cos_roll * sin_yaw * sin_pitch)
-                          +u * (cos_pitch * sin_yaw))
+    def get_jacobian(self, X = None):
+        (ix, iy, iz, g, m,
+        roll, pitch, yaw, p, q, r, u, v, w, x, y, z,
+        sin_roll, cos_roll, sin_pitch, cos_pitch,
+        tan_pitch, sin_yaw, cos_yaw) = self.prepare_variables(X)
 
-        self.z_d        = (w * (cos_roll * cos_pitch)
-                          -u * (sin_pitch)
-                          +v * (cos_pitch * sin_roll))
+        out = np.array([
+        [(q*cos_roll - r*sin_roll)*tan_pitch, (q*sin_roll + r*cos_roll)/cos_pitch**2, 0, 1, sin_roll*tan_pitch, cos_roll*tan_pitch, 0, 0, 0, 0, 0, 0, ],
+        [-q*sin_roll, -r*cos_pitch, 0, 0, cos_roll, -sin_pitch, 0, 0, 0, 0, 0, 0, ],
+        [(q*cos_roll - r*sin_roll)/cos_pitch, (q*sin_roll + r*cos_roll)*sin_pitch/cos_pitch**2, 0, 0, sin_roll/cos_pitch, cos_roll/cos_pitch, 0, 0, 0, 0, 0, 0, ],
+        [0, 0, 0, 0, r*(iy - iz)/ix, q*(iy - iz)/ix, 0, 0, 0, 0, 0, 0, ],
+        [0, 0, 0, -r*(ix - iz)/iy, 0, -p*(ix - iz)/iy, 0, 0, 0, 0, 0, 0, ],
+        [0, 0, 0, q*(ix - iy)/iz, p*(ix - iy)/iz, 0, 0, 0, 0, 0, 0, 0, ],
+        [0, -g*cos_pitch, 0, 0, -w, v, 0, r, -q, 0, 0, 0, ],
+        [g*cos_pitch*cos_roll, -g*sin_pitch*sin_roll, 0, w, 0, -u, -r, 0, p, 0, 0, 0, ],
+        [-g*sin_roll*cos_pitch, -g*sin_pitch*cos_roll, 0, -v, u, 0, q, -p, 0, 0, 0, 0, ],
+        [v*(sin_pitch*cos_roll*cos_yaw + sin_roll*sin_yaw) - w*(sin_pitch*sin_roll*cos_yaw - sin_yaw*cos_roll), (-u*sin_pitch + v*sin_roll*cos_pitch + w*cos_pitch*cos_roll)*cos_yaw, -u*sin_yaw*cos_pitch - v*(sin_pitch*sin_roll*sin_yaw + cos_roll*cos_yaw) - w*(sin_pitch*sin_yaw*cos_roll - sin_roll*cos_yaw), 0, 0, 0, cos_pitch*cos_yaw, sin_pitch*sin_roll*cos_yaw - sin_yaw*cos_roll, sin_pitch*cos_roll*cos_yaw + sin_roll*sin_yaw, 0, 0, 0, ],
+        [v*(sin_pitch*sin_yaw*cos_roll - sin_roll*cos_yaw) - w*(sin_pitch*sin_roll*sin_yaw + cos_roll*cos_yaw), (-u*sin_pitch + v*sin_roll*cos_pitch + w*cos_pitch*cos_roll)*sin_yaw, u*cos_pitch*cos_yaw + v*(sin_pitch*sin_roll*cos_yaw - sin_yaw*cos_roll) + w*(sin_pitch*cos_roll*cos_yaw + sin_roll*sin_yaw), 0, 0, 0, sin_yaw*cos_pitch, sin_pitch*sin_roll*sin_yaw + cos_roll*cos_yaw, sin_pitch*sin_yaw*cos_roll - sin_roll*cos_yaw, 0, 0, 0, ],
+        [(v*cos_roll - w*sin_roll)*cos_pitch, -u*cos_pitch - v*sin_pitch*sin_roll - w*sin_pitch*cos_roll, 0, 0, 0, 0, -sin_pitch, sin_roll*cos_pitch, cos_pitch*cos_roll, 0, 0, 0, ],
+        ], dtype = np.float64)
+        return out
 
-        self.X_d = np.array([[self.roll_d,
-                             self.pitch_d,
-                             self.yaw_d,
-                             self.p_d,
-                             self.q_d,
-                             self.r_d,
-                             self.u_d,
-                             self.v_d,
-                             self.w_d,
-                             self.x_d,
-                             self.y_d,
-                             self.z_d]], dtype= np.float64).T
+    def get_B(self, X = None):
+        (ix, iy, iz, g, m,
+        roll, pitch, yaw, p, q, r, u, v, w, x, y, z,
+        sin_roll, cos_roll, sin_pitch, cos_pitch,
+        tan_pitch, sin_yaw, cos_yaw) = self.prepare_variables(X)
 
-        return self.X_d.copy()
+        out = np.array([
+        [0, 0, 0, 0, ],
+        [0, 0, 0, 0, ],
+        [0, 0, 0, 0, ],
+        [0, 1/ix, 0, 0, ],
+        [0, 0, 1/iy, 0, ],
+        [0, 0, 0, 1/iz, ],
+        [0, 0, 0, 0, ],
+        [0, 0, 0, 0, ],
+        [-1/m, 0, 0, 0, ],
+        [0, 0, 0, 0, ],
+        [0, 0, 0, 0, ],
+        [0, 0, 0, 0, ],
+        ], dtype = np.float64)
+        return out
 
-    # def get_linearized(self):
 
 
 
 
 
 
-drone = quad(1,.5,.5,.5)
-for i in range(1000):
-    drone.get_X_dot()
-print(drone.X_d)
+# drone = quad(1,.5,.5,.5)
+# for i in range(10000):
+#     drone.get_X_dot()
+# A = drone.get_jacobian(X = np.random.random(12)*0)

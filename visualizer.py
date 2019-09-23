@@ -19,11 +19,12 @@ class visualizer(object):
         self.ax.set_xlim(-5, 5)
         self.ax.set_ylim(-5, 5)
         self.ax.set_zlim(0, 10)
-    def draw2d(self, quad):
-        x = quad.x[0]
-        y = quad.x[1]
-        z = quad.x[2]
-        r = quad.x[3]
+
+    def draw2d(self, pose):
+        x = pose[0]
+        y = pose[1]
+        z = pose[2]
+        r = pose[3]
         arm=.5
         center = np.array([x,y,z])
         front_right = np.array([x + arm, y + arm*np.cos(r), z + arm*np.sin(r)])
