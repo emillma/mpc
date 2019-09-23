@@ -68,7 +68,7 @@ class system:
 
         # eigVals, eigVecs = scipy.linalg.eig(A-B@K)
 
-
-sys = system()
-out = sys.simluate(np.array([[1],[0]]), 10)
-plt.plot(out[:,0])
+if __name__ == '__name__':
+    sys = system()
+    out = sys.simluate(np.array([[1],[0]]), 10)
+    plt.plot(out[:,0])

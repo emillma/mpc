@@ -7,10 +7,10 @@ Created on Mon Sep 23 20:18:53 2019
 """
 
 import numpy as np
-import scipy
+import scipy.linalg
 from matplotlib import pyplot as plt
 from statespace import quad
-import sympy
+from visualizer import Visualizer
 
 class System:
     def __init__(self, A, B, C, D, X, Q, R):
@@ -21,22 +21,36 @@ class System:
         self.X = X
         self.delta = 1e-2
         self.state_number = A.shape[0]
+        self.actuator_number = 4
         self.discretize(self.delta)
         self.lqr(Q, R)
 
-    def discretize(self, delta):
-        self.delta = delta
+    def get_pos_rpy(self):
+        return self.X[-3:,0], self.X[:3,0]
+
+    def discretize(self, delta = None):
+        if delta:
+            self.delta = delta
+
         self.A_d = np.eye(self.state_number) + self.A * delta
-        self.B_d = (0.5 * delta**2 * A + delta * np.eye(self.state_number))@self.B
+        self.B_d = (0.5 * delta**2 * self.A + self.delta * np.eye(self.state_number))@self.B
         self.C_d = self.C
         self.D_d = self.D
 
-    def iterate(self, u):
-        self.X = self.A_d@self.X + self.B_d@u
-        y = self.C_d@self.X + self.D_d@u
+    def iterate(self, U = None):
+        if U is None:
+            U = np.zeros((self.actuator_number, 1))
+        # print(U)
+        self.X = self.A_d@self.X + self.B_d@U
+        y = self.C_d@self.X + self.D_d@U
+        # print(self.X)
+        return self.get_pos_rpy()
 
     def set_x(self, X):
         self.X = X
+
+    def get_optimal_gain(self):
+        return -self.K@ self.X
 
     def simluate(self, time):
         out = np.empty((0,self.state_number))
@@ -73,15 +87,15 @@ if __name__ == '__main__':
     B = drone.get_B()
     C = np.eye(12)
     D = np.zeros((12,4), dtype = np.float64)
-    Q = np.diag([1,1,1,1,1,1,1,1,1,1,1,1])
-    R = np.diag([1,1,1,1])
+    Q = np.diag([100,100,100,1,1,1,1,1,1,100,100,100])
+    R = np.diag([1,1,1,1])*0.1
 
     X = np.zeros(12)[:,None]
     X[-3] = 1
+    X[-1] = 1
     sys = System(A, B, C, D, X, Q, R)
-    out = sys.simluate(10)
-
-    plt.plot(out[:,-3], label = 'x')
+    presentation = Visualizer(sys)
+    presentation.animate(10)
 
 
 

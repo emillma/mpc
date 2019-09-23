@@ -8,35 +8,65 @@ Created on Sat Sep 21 14:54:02 2019
 from matplotlib import pyplot as plt
 import numpy as np
 from mpl_toolkits.mplot3d import axes3d
+from utils import matrix_from_rpy
+from matplotlib import animation
+
+
 plt.close('all')
-class visualizer(object):
-    def __init__(self):
+
+class Visualizer(object):
+    def __init__(self, system):
         self.fig = plt.figure()
         self.ax = self.fig.add_subplot(111, projection='3d')
         self.ax.set_xlabel('X')
         self.ax.set_ylabel('Y')
         self.ax.set_zlabel('Z')
+        self.ax.set_title('Simulation')
         self.ax.set_xlim(-5, 5)
         self.ax.set_ylim(-5, 5)
-        self.ax.set_zlim(0, 10)
+        self.ax.set_zlim(0, 3)
+        self.system = system
+        self.line1, =  self.ax.plot([], [], [], c = 'b', lw=2)
+        self.line2, =  self.ax.plot([], [], [], c = 'r', lw=2)
 
-    def draw2d(self, pose):
-        x = pose[0]
-        y = pose[1]
-        z = pose[2]
-        r = pose[3]
-        arm=.5
-        center = np.array([x,y,z])
-        front_right = np.array([x + arm, y + arm*np.cos(r), z + arm*np.sin(r)])
-        back_left = np.array([x - arm, y - arm*np.cos(r), z - arm*np.sin(r)])
+    def update_drawing(self, N):
+        U = self.system.get_optimal_gain()
+        pos, rpy = self.system.iterate(U = U)
+        # print(pos,rpy)
+        self.draw_drone(pos, rpy)
+        return [self.line1, self.line2]
 
-        for p, c in zip([center, front_right, back_left],['b','g','r']):
-            self.ax.scatter(p[0], p[1], p[2])
+    def draw_drone(self, position, rpy):
 
+        R = matrix_from_rpy(rpy)
+        size = 0.2
+        fl = R @ np.array([[ 1, 0,0]]).T * size + position
+        fr = R @ np.array([[0,-1,0]]).T * size + position
+        bl = R @ np.array([[0, 1,0]]).T * size + position
+        br = R @ np.array([[-1,0,0]]).T * size + position
+        # self.ax.scatter(position[0],position[1],position[2])
+        self.line1.set_data([fl[0,0],br[0,0]],[fl[1,0],br[1,0]])
+        self.line1.set_3d_properties([fl[2,0],br[2,0]])
+        self.line2.set_data([fr[0,0],bl[0,0]],[fr[1,0],bl[1,0]])
+        self.line2.set_3d_properties([fr[2,0],bl[2,0]])
+        # self.ax.scatter(position[0],position[1],position[2])
 
-class quad:
-    x = np.array([1,2,2,np.pi/6.])
+    def animate(self, time):
+        print(round(time/self.system.delta))
+        self.ani = animation.FuncAnimation(self.fig, self.update_drawing,
+                                      frames = round(time/self.system.delta),
+                                      interval = round(self.system.delta*1000),
+                                      repeat_delay = 500, blit=True)
+        plt.show()
 
+    def clear(self):
+        # self.ax.clear()
+        # pass
+        self.update_drawing()
 
-sim = visualizer()
-sim.draw2d(quad())
+if __name__ == '__main__':
+    pos = np.array([[0,1,2]]).T
+    rpy = np.array([[0.1,0.1,1]]).T
+    
+    sim = Visualizer(1)
+    sim.draw_drone(pos, rpy)

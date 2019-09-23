@@ -8,12 +8,6 @@ Created on Sun Sep 22 14:39:30 2019
 
 
 import numpy as np
-import scipy.signal as signal
-import scipy
-from matplotlib import pyplot as plt
-import quaternion
-from numba import jitclass
-
 
 class quad(object):
     def __init__(self, m, ix, iy, iz, g = 9.81):
