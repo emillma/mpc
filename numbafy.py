@@ -10,7 +10,7 @@ https://github.com/jankoslavic/numbafy/blob/master/numbafy.py
 import sympy as sym
 from numba import jitclass
 def numbafy(expression, parameters=None, constants=None, use_cse=True, new_function_name='numbafy_func'):
-    cse = sym.cse(expression)
+    # cse = sym.cse(expression)
 
     code_parameters = ''
     code_constants = ''
