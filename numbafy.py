@@ -7,10 +7,12 @@ https://github.com/jankoslavic/numbafy/blob/master/numbafy.py
 """
 
 
-import sympy as sym
+import sympy as sp
 from numba import jitclass
+
+
 def numbafy(expression, parameters=None, constants=None, use_cse=True, new_function_name='numbafy_func'):
-    # cse = sym.cse(expression)
+    # cse = sp.cse(expression)
 
     code_parameters = ''
     code_constants = ''
@@ -26,7 +28,7 @@ def numbafy(expression, parameters=None, constants=None, use_cse=True, new_funct
         code_constants = '\n    '.join(code_constants)
 
     if use_cse:
-        expressions = sym.cse(expression)
+        expressions = sp.cse(expression)
         code_cse = []
         for e in expressions[0]:
             k, v = e
@@ -51,7 +53,7 @@ if __name__ == '__main__':
     from numba import jit
 
     # this is a very basic example; numbafy shines with huge expression
-    a, b, c = sym.symbols('a, b, c')
+    a, b, c = sp.symbols('a, b, c')
 
     constants = {c: 1.4}
 
