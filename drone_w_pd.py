@@ -75,7 +75,7 @@ P_lqr = scipy.linalg.solve_continuous_are(A_array,B_array,Q_array,R_array)
 P_lqr = sp.Matrix(P_lqr)
 
 K = R_lqr.inv()*(B.T*P_lqr+N.T)
-
+K = sp.Matrix(np.where(np.less(K,1e-3), 0., K))
 #%%Generate model
 
 generate_model(X_d2, X0 = X0, states = X, gains = U2, constants = constants, K = K)

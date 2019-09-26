@@ -47,14 +47,14 @@ cos = sp.cos
 sin = sp.sin
 tan = sp.tan
 
-constants = sp.Matrix([[g, delta, m, ix, iy, iz]])
+constants = sp.Matrix([g, delta, m, ix, iy, iz])
 
 
 #%% paper implementation
-X = sp.Matrix([[roll],[pitch],[yaw],
-                  [p],[q],[r],
-                  [u],[v],[w],
-                  [x],[y],[z]])
+X = sp.Matrix([roll ,pitch, yaw,
+                  p, q, r,
+                  u, v, w,
+                  x, y, z])
 
 U = sp.Matrix([[ft, mx, my, mz]]).T
 
@@ -78,8 +78,8 @@ T = sp.Matrix([[1, sin(roll)*tan(pitch),  cos(roll)*tan(pitch)],
                [0, sin(roll)/cos(pitch), cos(roll)/cos(pitch)]])
 
 
-v_b = sp.Matrix([[u, v, w]]).T
-omega_b = sp.Matrix([[p, q, r]]).T
+v_b = sp.Matrix([u, v, w])
+omega_b = sp.Matrix([p, q, r])
 
 """
 v = [x_d, y_d, z_d]
@@ -94,7 +94,7 @@ x_d, y_d, z_d = v
 roll_d, pitch_d, yaw_d = omega
 
 
-fb = R.T*sp.Matrix([[0, 0, m*g]]).T - ft * sp.Matrix([[0, 0, 1]]).T
+fb = R.T*sp.Matrix([0, 0, m*g]) - ft * sp.Matrix([0, 0, 1])
 v_b_d = fb/m - omega_b.cross(v_b)
 u_d, v_d, w_d = v_b_d
 
