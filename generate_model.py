@@ -9,7 +9,7 @@ Created on Thu Sep 26 15:36:46 2019
 import sympy as sp
 import re
 
-def generate_model(expression, states, X0, gains, constants, use_cse=True):
+def generate_model(expression, states, X0, gains, constants, K, use_cse=True):
     replacements = {'cos':'np.cos', 'sin':'np.sin', 'Matrix':'np.array', 'tan':'np.tan'}
 
     file = open('model.py', 'w')
@@ -53,6 +53,7 @@ from numba import jitclass, float64
 keys = [
 {keys},
 ('X', float64[:,:]),
+('K', float64[:,:]),
 ]
 
 
@@ -61,21 +62,25 @@ class model(object):
     def __init__(self):
         {code_constants}
         self.X = {X0}.astype(np.float64)
+        self.K = {K}.astype(np.float64)
+
+    def reset(self):
+        self.X = {X0}.astype(np.float64)
 
     def iterate(self):
         ft, mx, my, mz = 0, 0, 0, 0
-        p_t, q_t, r_t = 0, 0, 0
+        ft, p_t, q_t, r_t = -(self.K @ self.X)[:,0]
         {code_states} = self.X[:,0]
         {code_cse}
         X_d = {code_expression}
-        self.X += X_d * self.delta
+        self.X = self.X + X_d * self.delta
         return self.X
 
-roll = []
+state = []
 a = model()
 for i in range(int(2e3)):
-    roll.append(a.iterate()[3,0])
-roll = np.array(roll)
+    state.append(a.iterate()[:,0])
+state = np.array(state)
 """
 
     for k, i in replacements.items():
@@ -84,8 +89,3 @@ roll = np.array(roll)
     file.close()
     return template
 
-r = 0.25
-delta = sp.symbols('delta')
-constants = {g:9.81, delta:1e-3, m:1,ix:10, iy:0.25, iz:0.25, P_r:1, D_r:0}
-
-generate_model(X_d2, X0 = X0, states = X, gains = U, constants = constants)

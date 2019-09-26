@@ -47,8 +47,7 @@ cos = sp.cos
 sin = sp.sin
 tan = sp.tan
 
-omega_b_t = sp.symbols(['omega_b_t'])
-p_t, q_t, r_t = sp.symbols(['p_t', 'q_t', 'r_t'])
+constants = sp.Matrix([[g, delta, m, ix, iy, iz]])
 
 
 #%% paper implementation
@@ -56,6 +55,7 @@ X = sp.Matrix([[roll],[pitch],[yaw],
                   [p],[q],[r],
                   [u],[v],[w],
                   [x],[y],[z]])
+
 U = sp.Matrix([[ft, mx, my, mz]]).T
 
 Rx = sp.Matrix([[1,             0,          0],
@@ -109,41 +109,7 @@ X_d = sp.Matrix([[roll_d],[pitch_d],[yaw_d],
                   [x_d],[y_d],[z_d]])
 
 #%% custom stuff
-U2 = sp.Matrix([[ft, p_t, q_t, r_t]]).T
-target_rates = sp.Matrix([[p_t, q_t, r_t]]).T
 
-rotation = sp.Matrix([[roll, pitch, yaw, p, q, r]]).T
-
-omega_b_dd = omega_b_d.jacobian(rotation)*rotation
-m_internal = -P_r*(omega_b - target_rates) - D_r*omega_b_dd
-mx_i, my_i, mz_i = m_internal
-replacements = {mx:mx_i, my:my_i, mz:mz_i}
-omega_b_d_external = omega_b_d.subs(replacements)
-p_d2, q_d2, r_d2 = omega_b_d_external
-
-
-X_d2 = sp.Matrix([[roll_d],[pitch_d],[yaw_d],
-                  [p_d2],[q_d2],[r_d2],
-                  [u_d],[v_d],[w_d],
-                  [x_d],[y_d],[z_d]])
-
-A2 = X_d2.jacobian(X)
-
-X0 = sp.zeros(12,1)
-X0[3] = 0
-constants = {g:9.81*1, delta:1e-3, m:1,ix:0.25, iy:0.25, iz:0.25, P_r:1, D_r:0}
-X0_dict = subs_dict(X,X0)
-
-A = X_d2.jacobian(X)
-B = X_d2.jacobian(U2)
-
-A = A.subs(constants).subs(X0_dict)
-B = B.subs(constants).subs(X0_dict)
-
-# Q = sp.diag([1,1,1,1,1,1,1,1,1,1,1,1])
-# R = sp.diag([1,1,1,1])
-# N = sp.zeros(12,4)
-# P = sp.solve(A.T*P+P*A-(P*B+N)*R.inv()*(B.T*P+N.T)+Q = 0)
 
 
 
