@@ -21,7 +21,7 @@ class system:
         self.x = np.array([[0],[0]], dtype = np.float64)
         self.delta = 1e-2
         self.discretize(self.delta)
-        self.lqr(np.diag(np.array([100,1])),np.diag(np.array([0.01])))
+        self.lqr(np.diag(np.array([1.3,-1])),np.diag(np.array([1])))
 
     def discretize(self, delta):
         self.delta = delta
@@ -68,7 +68,8 @@ class system:
 
         # eigVals, eigVecs = scipy.linalg.eig(A-B@K)
 
-if __name__ == '__name__':
+if __name__ == '__main__':
+    print('run')
     sys = system()
     out = sys.simluate(np.array([[1],[0]]), 10)
     plt.plot(out[:,0])

@@ -8,10 +8,12 @@ Created on Mon Sep 23 17:46:20 2019
 import sympy as sp
 import re
 from numbafy import numbafy
-
+from utils import subs_dict
 # file = open('partials.txt', 'w')
 
 g = sp.Symbol('g')
+delta = sp.symbols('delta')
+
 m, ix, iy, iz = sp.symbols(['m', 'ix', 'iy', 'iz'])
 fx, fy, fz, mx, my, mz = sp.symbols(['fx', 'fy', 'fz', 'mx', 'my', 'mz'])
 ft = sp.symbols('ft')
@@ -33,17 +35,22 @@ Rx, Ry, Rz, R = sp.symbols(['Rx', 'Ry', 'Rz', 'R'])
 
 T = sp.symbols('T')
 
-v, vb, omega, omegab = sp.symbols(['v', 'vb', 'omega', 'omegab'])
+v, v_b, omega, omega_b = sp.symbols(['v', 'v_b', 'omega', 'omega_b'])
 
 cos = sp.cos
 sin = sp.sin
 tan = sp.tan
 
+omega_b_t = sp.symbols(['omega_b_t'])
+p_t, q_t, r_t = sp.symbols(['p_t', 'q_t', 'r_t'])
+P_r, D_r, p_t, q_t, r_t = sp.symbols(['P_r', 'D_r', 'p_t', 'q_t', 'r_t'])
+
+
+#%% paper implementation
 X = sp.Matrix([[roll],[pitch],[yaw],
                   [p],[q],[r],
                   [u],[v],[w],
                   [x],[y],[z]])
-
 U = sp.Matrix([[ft, mx, my, mz]]).T
 
 Rx = sp.Matrix([[1,             0,          0],
@@ -51,7 +58,7 @@ Rx = sp.Matrix([[1,             0,          0],
                 [0,     sin(roll), cos(roll)]])
 
 Ry = sp.Matrix([[cos(pitch),    0, sin(pitch)],
-                [0,             1,          1],
+                [0,             1,          0],
                 [-sin(pitch),   0, cos(pitch)]])
 
 Rz = sp.Matrix([[cos(yaw), -sin(yaw),    0],
@@ -66,31 +73,69 @@ T = sp.Matrix([[1, sin(roll)*tan(pitch),  cos(roll)*tan(pitch)],
                [0, sin(roll)/cos(pitch), cos(roll)/cos(pitch)]])
 
 
-vb = sp.Matrix([[u, v, w]]).T
-omegab = sp.Matrix([[p, q, r]]).T
+v_b = sp.Matrix([[u, v, w]]).T
+omega_b = sp.Matrix([[p, q, r]]).T
 
-v       = R*vb
-omega   = T*omegab
+"""
+v = [x_d, y_d, z_d]
+v_b = [u, v, w]
+omega = [ roll_d, pitch_d, yaw_d]
+omega_b = [p, q, r]
+"""
+v       = R*v_b
+omega   = T*omega_b
 
 x_d, y_d, z_d = v
 roll_d, pitch_d, yaw_d = omega
 
 
 fb = R.T*sp.Matrix([[0, 0, m*g]]).T - ft * sp.Matrix([[0, 0, 1]]).T
-vb_d = fb/m - omegab.cross(vb)
-u_d, v_d, w_d = vb_d
+v_b_d = fb/m - omega_b.cross(v_b)
+u_d, v_d, w_d = v_b_d
 
 inertia = sp.diag(ix, iy, iz)
-mb = sp.Matrix([[mx, my, mz]]).T
-omegab_d = inertia.inv() * (mb - omegab.cross(inertia * omegab))
-p_d, q_d, r_d = omegab_d
+m_b = sp.Matrix([[mx, my, mz]]).T
+omega_b_d = inertia.inv() * (m_b - omega_b.cross(inertia * omega_b))
+p_d, q_d, r_d = omega_b_d
 
 X_d = sp.Matrix([[roll_d],[pitch_d],[yaw_d],
                   [p_d],[q_d],[r_d],
                   [u_d],[v_d],[w_d],
                   [x_d],[y_d],[z_d]])
 
-A = X_d.jacobian(X)
+#%% custom stuff
+U2 = sp.Matrix([[ft, p_t, q_t, r_t]]).T
+target_rates = sp.Matrix([[p_t, q_t, r_t]]).T
+
+rotation = sp.Matrix([[roll, pitch, yaw, p, q, r]]).T
+
+omega_b_dd = omega_b_d.jacobian(rotation)*rotation
+m_internal = -P_r*(omega_b - target_rates) - D_r*omega_b_dd
+mx_i, my_i, mz_i = m_internal
+replacements = {mx:mx_i, my:my_i, mz:mz_i}
+omega_b_d_external = omega_b_d.subs(replacements)
+p_d, q_d, r_d = omega_b_d_external
+
+
+X_d2 = sp.Matrix([[roll_d],[pitch_d],[yaw_d],
+                  [p_d],[q_d],[r_d],
+                  [u_d],[v_d],[w_d],
+                  [x_d],[y_d],[z_d]])
+
+A2 = X_d2.jacobian(X)
+
+X0 = sp.zeros(12,1)
+X0[3] = 1
+constants = {g:9.81*0, delta:1e-3, m:1,ix:0.25, iy:0.25, iz:0.25, P_r:1, D_r:0}
+X0_dict = subs_dict(X,X0)
+
+A = X_d2.jacobian(X)
+B = X_d2.jacobian(U2)
+
+A =A.subs(constants).subs(X0_dict)
+# A =X_d2.subs(X0_dict)
+
+
 
 
 

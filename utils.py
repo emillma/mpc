@@ -25,3 +25,9 @@ def matrix_from_rpy(rpy):
 
     R = yaw_matrix @ pitch_matrix @ roll_matrix
     return R
+
+def subs_dict(a,b):
+    dct = {}
+    for i, item in enumerate(a):
+        dct[item] = b[i]
+    return dct

@@ -28,7 +28,7 @@ def numbafy(expression, parameters=None, constants=None, use_cse=True, new_funct
         code_constants = '\n    '.join(code_constants)
 
     if use_cse:
-        expressions = sp.cse(expression)
+        expressions = sp.cse(expression, optimizations = 'basic')
         code_cse = []
         for e in expressions[0]:
             k, v = e
@@ -61,6 +61,7 @@ if __name__ == '__main__':
     parameters = (a, b)
 
     num = numbafy(expression=expression, parameters=parameters, constants=constants, use_cse=True)
+    numbafy_func = None
     exec(num)
     result = numbafy_func(a=2.0, b=3.0)
     print(result)
