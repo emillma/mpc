@@ -8,6 +8,7 @@ Created on Mon Sep 23 21:49:19 2019
 
 
 import numpy as np
+from matplotlib import pyplot as plt
 
 def matrix_from_rpy(rpy):
     roll, pitch, yaw = rpy
@@ -49,3 +50,11 @@ def sp_repr_2d(m):
     string = m.__str__()
     string = string[:-1]
     return string + ', dtype = np.float64)'
+
+
+def plot_piecewise(exp, var, x):
+    y = np.empty(x.shape, dtype = np.float64)
+    for i, val  in enumerate(x):
+
+        y[i] = exp.subs(var, float(val))
+    plt.plot(x,y)

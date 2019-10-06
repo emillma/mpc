@@ -7,7 +7,6 @@ Created on Mon Sep 23 17:46:20 2019
 """
 import sympy as sp
 import re
-from numbafy import numbafy
 from utils import subs_dict
 # file = open('partials.txt', 'w')
 

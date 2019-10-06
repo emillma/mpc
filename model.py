@@ -58,6 +58,6 @@ class model(object):
 
 state = []
 a = model()
-for i in range(int(2e7)):
+for i in range(int(2e3)):
     state.append(a.iterate())
 state = np.array(state)

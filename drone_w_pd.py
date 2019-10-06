@@ -8,7 +8,7 @@ Created on Thu Sep 26 19:46:43 2019
 import sympy as sp
 from paper_implementation import X, X_d, U, constants
 from utils import subs_dict
-import scipy
+import scipy.linalg
 import numpy as np
 from generate_model import generate_model
 
