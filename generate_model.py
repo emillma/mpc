@@ -89,7 +89,7 @@ for i in range(int(2e3)):
     state.append(a.iterate())
 state = np.array(state)
 """
-
+#should add locals
     for k, i in replacements.items():
         template = template.replace(k, i)
     file.write(template)
