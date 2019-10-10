@@ -12,11 +12,11 @@ import numpy as np
 import sympy as sp
 from utils import plot_piecewise
 from matplotlib import pyplot as plt
-# out1, out2 = get_problem(0)
+out1, out2 = get_problem(1)
 x_polys, lbda_parts, x_points, x_start, x_end, lbda = out1
 lbda_polys, t_parts, lbda_points, t = out2
 n = len(x_points)
-x_points_vals = dict(zip(x_points,list(np.linspace(0,10, n) + np.random.random(n)*5)))
+x_points_vals = dict(zip(x_points,list(np.linspace(0,10, n) + np.random.random(n)*10)))
 x_start_vals = dict(zip(x_start, [0.,0.,0.,0.]))
 x_end_vals = dict(zip(x_end, [0.,0.,0.,0.]))
 
