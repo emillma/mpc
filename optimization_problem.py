@@ -79,10 +79,9 @@ def get_problem(checkpoints_n, tunables_n = 5):
     x_points[-1] = x_end[0]
     lbda = sp.symbols('lbda')
 
-
     t_parts = list(np.linspace(0,1,points_n))
-    lbda_start = sp.symbols([f'lbda_start_{i}' for i in range(4)], real = True)
-    lbda_end = sp.symbols([f'lbda_end_{i}' for i in range(4)], real = True)
+    lbda_start = [0.,1.,0.,0.]
+    lbda_end = [1.,1.,0.,0.]
     lbda_points = [lbda_start[0]]
     for i in range(checkpoints_n+1):
         for j in range(tunables_n):
