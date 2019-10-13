@@ -57,7 +57,8 @@ def get_interpolation_expressions(x, y, start_cond, end_cond, lbda):
     variables += [solutions[i,j] for i in range(n_points-1) for j in range(6)]
 
     solution = list(sp.linsolve(problems, variables))[0]
-
+    for element in solution:
+        element._assumptions.update({"real":True})
     solution = solution[2:]
     out_polynomes = []
     for i in range(0, len(solution), 6):
@@ -77,7 +78,7 @@ def get_problem(checkpoints_n, tunables_n = 5):
             x_points.append(sp.symbols(f'x_part_{i}_tunable_{j}', real = True))
         x_points.append(sp.symbols(f'x_checkpoint_{i}', real = True))
     x_points[-1] = x_end[0]
-    lbda = sp.symbols('lbda')
+    lbda = sp.symbols('lbda', real = True)
 
     t_parts = list(np.linspace(0,1,points_n))
     lbda_start = [0.,1.,0.,0.]
