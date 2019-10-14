@@ -13,7 +13,7 @@ import sympy as sp
 from utils import plot_piecewise
 from matplotlib import pyplot as plt
 if 1:
-    out1, out2 = get_problem(1)
+    out1, out2 = get_problem(0)
     x_polys, lbda_parts, x_points, x_start, x_end, lbda = out1
     lbda_polys, t_parts, lbda_points, t = out2
     n = len(x_points)
@@ -47,11 +47,11 @@ for i in range(len(x_polys)):
     args.append((x_t_poly_tmp, t<t_parts[i+1]))
 f = sp.Piecewise(*args)
 
-plt.close('all')
-fig, ax = plt.subplots(3, 2, sharex='col')
-plot_piecewise(f,t,np.linspace(0,1,200), ax[0,0])
-plot_piecewise(f.diff(t,1),t,np.linspace(0,1,200), ax[1,0])
-plot_piecewise(f.diff(t,2),t,np.linspace(0,1,200), ax[1,1])
-plot_piecewise(f.diff(t,3),t,np.linspace(0,1,200), ax[2,0])
-plot_piecewise(f.diff(t,4),t,np.linspace(0,1,200), ax[2,1])
+# plt.close('all')
+# fig, ax = plt.subplots(3, 2, sharex='col')
+# plot_piecewise(f,t,np.linspace(0,1,200), ax[0,0])
+# plot_piecewise(f.diff(t,1),t,np.linspace(0,1,200), ax[1,0])
+# plot_piecewise(f.diff(t,2),t,np.linspace(0,1,200), ax[1,1])
+# plot_piecewise(f.diff(t,3),t,np.linspace(0,1,200), ax[2,0])
+# plot_piecewise(f.diff(t,4),t,np.linspace(0,1,200), ax[2,1])
 

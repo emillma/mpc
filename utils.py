@@ -52,11 +52,10 @@ def sp_repr_2d(m):
     return string + ', dtype = np.float64)'
 
 
-def plot_piecewise(exp, var, x, ax = None):
-    if ax is None:
-        ax = plt
+def plot_piecewise(exp, var, x):
+
     y = np.empty(x.shape, dtype = np.float64)
     for i, val  in enumerate(x):
 
         y[i] = exp.subs(var, float(val))
-    ax.plot(x,y)
+    return [x,y]
