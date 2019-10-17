@@ -15,7 +15,8 @@ import numba as nb
 from numba import njit, float64, complex128, void, prange
 
 #can be parallelized
-@nb.njit(nb.types.Tuple((nb.float64[:,:], nb.float64[:], nb.float64[:]))(float64[:], float64[:], float64[:], float64[:]), cache = True)
+
+@nb.njit(nb.types.Tuple((nb.float64[:,:], nb.float64[:], nb.float64[:]))(float64[:], float64[:], float64[:], float64[:]), cache = True, parallel = True)
 def get_spline_A_b(x_points, y_points,
                start_derivatives = np.array([0.,0.,0.]), end_derivatives = np.array([0.,0.,0.])):
 
@@ -59,17 +60,17 @@ def get_spline_A_b(x_points, y_points,
         A[5+6*i+1, 6+i*6: 6+(i+1)*6] = potential_array[2+i] # = y[k+1]
 
         #Derivatives equal from last
-        A[5+6*i+2, 6+i*6: 6+(i+1)*6-1] = poly_d1 * potential_array[1+i,1:]
-        A[5+6*i+2, 6+(i-1)*6: 6+i*6-1] = -A[5+6*i+2, 6+i*6: 6+(i+1)*6][:-1]
+        A[7+6*i, 6+i*6: 6+(i+1)*6-1] = poly_d1 * potential_array[1+i,1:]
+        A[7+6*i, 6+(i-1)*6: 6+i*6-1] = -A[5+6*i+2, 6+i*6: 6+(i+1)*6][:-1]
 
-        A[5+6*i+3, 6+i*6: 6+(i+1)*6-2] = poly_d2 * potential_array[1+i,2:] # = 0
-        A[5+6*i+3, 6+(i-1)*6: 6+i*6-2] = -A[5+6*i+3, 6+i*6: 6+(i+1)*6][:-2]
+        A[8+6*i, 6+i*6: 6+(i+1)*6-2] = poly_d2 * potential_array[1+i,2:] # = 0
+        A[8+6*i, 6+(i-1)*6: 6+i*6-2] = -A[5+6*i+3, 6+i*6: 6+(i+1)*6][:-2]
 
-        A[5+6*i+4, 6+i*6: 6+(i+1)*6-3] = poly_d3 * potential_array[1+i,3:] # = 0
-        A[5+6*i+4, 6+(i-1)*6: 6+i*6-3] = -A[5+6*i+4, 6+i*6: 6+(i+1)*6][:-3]
+        A[9+6*i, 6+i*6: 6+(i+1)*6-3] = poly_d3 * potential_array[1+i,3:] # = 0
+        A[9+6*i, 6+(i-1)*6: 6+i*6-3] = -A[5+6*i+4, 6+i*6: 6+(i+1)*6][:-3]
 
-        A[5+6*i+5, 6+i*6: 6+(i+1)*6-4] = poly_d4 * potential_array[1+i,4:] # = 0
-        A[5+6*i+5, 6+(i-1)*6: 6+(i)*6-4] = -A[5+6*i+5, 6+i*6: 6+(i+1)*6][:-4]
+        A[10+6*i, 6+i*6: 6+(i+1)*6-4] = poly_d4 * potential_array[1+i,4:] # = 0
+        A[10+6*i, 6+(i-1)*6: 6+(i)*6-4] = -A[5+6*i+5, 6+i*6: 6+(i+1)*6][:-4]
 
     A[-3, -8:-3] = poly_d1 * potential_array[-1,1:] # end[0]
     A[-2, -8:-4] = poly_d2 * potential_array[-1,2:] # end[1]
@@ -96,7 +97,7 @@ def get_spline_A_b(x_points, y_points,
 
 
 if __name__ == '__main__':
-    n = 100
+    n = 10
     x_points = np.arange(n)+((np.random.random(n)-0.5)*.4)
     y_points = np.random.random(n)
     start_derivatives = np.array([0.,0.,0])

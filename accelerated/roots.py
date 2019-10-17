@@ -51,4 +51,9 @@ def get_polyroots(polynome, boundory):
     roots_real = roots_real[np.logical_and(np.less(roots_real, boundory[1]-1e-9),
                                            np.greater(roots_real, boundory[0]+1e-9))]
     roots_real = np.hstack((boundory[0:1], roots_real, boundory[1:2]))
-    return roots_real
+    return np.sort(roots_real)
+
+if __name__ == '__main__':
+    poly = np.array([1.,0.,-3,0.])
+    boundory = np.array([-5., 10])
+    print(get_polyroots(poly, boundory))
