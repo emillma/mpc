@@ -14,14 +14,8 @@ from matplotlib import pyplot as plt
 import numba as nb
 from numba import njit, float64, complex128, void, prange
 
-    # potentials = 5-np.arange(6)
-    # poly = np.ones(6)
-    # poly_d1 = np.array([5., 4., 3., 2., 1.])
-    # poly_d2 = np.array([ 20., 12., 6., 2])
-    # poly_d3 = np.array([60., 24.,  6.])
-    # poly_d4 = np.array([120.,  24.])
-
-# @nb.njit(nb.types.Tuple((nb.float64[:,:], nb.float64[:], nb.float64[:]))(float64[:], float64[:], float64[:], float64[:]), cache = True, fastmath = True, parallel = True)
+#can be parallelized
+@nb.njit(nb.types.Tuple((nb.float64[:,:], nb.float64[:], nb.float64[:]))(float64[:], float64[:], float64[:], float64[:]), cache = True)
 def get_spline_A_b(x_points, y_points,
                start_derivatives = np.array([0.,0.,0.]), end_derivatives = np.array([0.,0.,0.])):
 
@@ -34,8 +28,7 @@ def get_spline_A_b(x_points, y_points,
     x_augmented[-2] = (x_points[-2] + x_points[-1])/2.
     x_augmented[-1] = x_points[-1]
 
-
-    potentials = 5-np.arange(6)
+    potentials = 5-np.arange(6).reshape(1,-1)
     poly = np.ones(6)
     poly_d1 = np.array([5., 4., 3., 2., 1.])
     poly_d2 = np.array([ 20., 12., 6., 2])
@@ -45,25 +38,11 @@ def get_spline_A_b(x_points, y_points,
     problem_shape = 6*(n+1)+2
     A = np.zeros((problem_shape,problem_shape))
 
-    potential_array = np.ones((len(x_augmented), 6), dtype =np.float64)
+    potential_array = np.ones((x_augmented.shape[0], 6), dtype =np.float64)
 
-    for i in nb.prange(len(x_augmented)):
-        potential_array[i] = x_augmented[i] ** potentials
+    potential_array = x_augmented.reshape(-1,1) ** potentials
 
-    potential_array
-#     potential_array = np.array([[1.27321204e-05, 1.21316700e-04, 1.15595370e-03, 1.10143860e-02,
-#   1.04949445e-01, 1.00000000e+00]
-# , [1.05196365e-01, 1.65044322e-01, 2.58940773e-01, 4.06256473e-01
-# , 6.37382517e-01, 1.00000000e+00]
-# , [2.19072075e+00, 1.87270606e+00, 1.60085580e+00, 1.36846851e+00
-#   , 1.16981559e+00, 1.00000000e+00]
-# , [1.01898751e+01, 6.40523529e+00, 4.02625536e+00, 2.53085663e+00
-#   , 1.59086663e+00, 1.00000000e+00]
-# , [3.29648440e+01, 1.63847878e+01, 8.14386592e+00, 4.04781271e+00
-# ,  2.01191767e+00, 1.00000000e+00]])
-    print('array', potential_array)
-
-    A[0, 0:6] = x_augmented[0] ** potentials # = y[0]
+    A[0, 0:6] = potential_array[0] # = y[0]
     A[1, 0:6] = potential_array[1] # = 0
     A[1,-2] = -1
 
@@ -72,7 +51,6 @@ def get_spline_A_b(x_points, y_points,
     A[4, 0:3] = poly_d3 * potential_array[0,3:] # start[2]
 
     A[5,-2] = -1
-
 
     for i in nb.prange(0, x_points.shape[0]):
 
@@ -118,14 +96,15 @@ def get_spline_A_b(x_points, y_points,
 
 
 if __name__ == '__main__':
-    n = 3
+    n = 100
     x_points = np.arange(n)+((np.random.random(n)-0.5)*.4)
     y_points = np.random.random(n)
     start_derivatives = np.array([0.,0.,0])
     end_derivatives = np.array([0.,0.,0])
     polys = np.empty((0,0))
     # for i in range(100):
-    A, b, x_augmented = get_spline_A_b(x_points, y_points, start_derivatives, end_derivatives)
+    for i in range(1000):
+        A, b, x_augmented = get_spline_A_b(x_points, y_points, start_derivatives, end_derivatives)
     solution = np.linalg.solve(A,b)
     polys = solution[:-2].reshape(-1,6)
 
