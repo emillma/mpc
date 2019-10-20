@@ -10,8 +10,11 @@ import numpy as np
 import numba as nb
 
 
-@nb.njit(nb.float64[:](nb.float64[:],nb.float64[:]), fastmath = True, cache = True)
+@nb.njit(nb.float64[::1](nb.float64[:],nb.float64[:]), fastmath = True, cache = True)
 def get_polyroots(polynome, boundory):
+    """
+    return the roots of the polynoe within the boundory, as well as the boundory points
+    """
     cast_t = np.float64
     length = len(polynome)
     p = np.empty((length,), dtype = np.complex128)
@@ -51,21 +54,10 @@ def get_polyroots(polynome, boundory):
     roots_real = roots_real[np.logical_and(np.less(roots_real, boundory[1]-1e-9),
                                            np.greater(roots_real, boundory[0]+1e-9))]
     roots_real = np.hstack((boundory[0:1], roots_real, boundory[1:2]))
-    return np.sort(roots_real)
+    return np.ascontiguousarray(np.sort(roots_real))
 
-@nb.njit(nb.float64[:](nb.float64[:,:], nb.int64), fastmath = True, cache = True)
-def polyder(poly, d = 1):
-    degree = poly.shape[1]
-    out = poly.copy()
-    multiplier = float(degree-1) - np.arange(degree).astype(np.float64)
-    derivator = np.ones(degree).astype(np.float64)
-    for i in nb.prange(1,d+1):
-        derivator[i:] *= multiplier[:-i]
-    derivator[:d] = 0.
-    return derivator
+
 
 if __name__ == '__main__':
-    poly = np.ones((2,6), dtype = np.float64)
-    boundory = np.array([-5., 10])
-    poly_d = polyder(poly,3)
-    print(poly_d)
+    poly = np.random.random(6)-0.5
+    print(get_polyroots(poly, np.array([-10.,2.])))

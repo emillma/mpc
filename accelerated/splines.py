@@ -78,7 +78,6 @@ def get_A_b_t_augmented(t_points, y_points,
     problem_shape = 6*(n+1)+2
     A = np.zeros((problem_shape,problem_shape))
 
-    potential_array = np.ones((n, 6), dtype =np.float64)
 
     potential_array = t_augmented.reshape(-1,1) ** potentials
 
