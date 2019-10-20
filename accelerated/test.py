@@ -10,9 +10,10 @@ Created on Thu Oct 17 13:31:27 2019
 import numpy as np
 from numba import njit, float64, void
 
-@njit(void(float64[::-1]))
+@njit
 def add(a):
-    a[0] = 23.
+    b = a
+    b[:] = np.array([3])
 
-b = np.empty((1,))
-add(b)
+a = np.zeros((1,))
+add(a)

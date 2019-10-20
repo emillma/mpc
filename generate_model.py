@@ -14,7 +14,7 @@ from utils import sp_repr_1d, sp_repr_2d
 def generate_model(expression, states, X0, gains, constants, K, use_cse=True):
     replacements = {'cos':'np.cos', 'sin':'np.sin', 'Matrix':'np.array', 'tan':'np.tan'}
 
-    file = open('model.py', 'w')
+    file = open('./generated/model.py', 'w')
     code_states = ''
     code_constants = ''
     code_cse = ''
