@@ -8,24 +8,18 @@ Created on Mon Oct 21 14:20:20 2019
 
 
 import numpy as np
-from max_derivatives import pow2
 from matplotlib import pyplot as plt
-from roots import get_polyroots
-from polynomial_utils import  polydiff
+from splines import get_A_b_t_augmented
+plt.close('all')
+for n in range(7,51,1):
+    x = np.zeros(39)
+    for i in range(1,5):
+        t_points =  np.linspace(-1,1,n) * float(i*0.1)
+        y_points = np.arange(n) + (np.random.random(n)-0.5)*0.
+        start_derivatives = np.array([0.,0.,0])
+        end_derivatives = np.array([0.,10.,0])
 
-def polyval(poly,x):
-    # return x.reshape(-1,1)**(poly.shape[0]-1 - np.arange(poly.shape[0]).astype(np.float64))
-    return np.sum(poly.reshape(-1,1)* x.reshape(1,-1)**(poly.shape[0]-1 - np.arange(poly.shape[0]).astype(np.float64)).reshape(-1,1), axis = 0)
-
-i = -3
-p = polys[i]
-p = pow2(p)
-bound = t_augmented[i-1:i+1]
-x = np.linspace(bound[0],bound[1],1000)
-plt.plot(x,polyval(p,x))
-plt.plot(x,polyval(polydiff(p),x))
-
-print(get_polyroots(polydiff(p), bound))
-print(np.roots(polydiff(p)))
-
-np.convolve
+        A, b, t_augmented =get_A_b_t_augmented(t_points, y_points, start_derivatives, end_derivatives)
+        x[i-1] = np.amax(np.abs(np.linalg.inv(A)))
+    plt.plot(np.log(x))
+    # print(x)

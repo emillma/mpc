@@ -22,8 +22,8 @@ def get_max_derivatives_abs(poly, boundory):
     for i in range(4):
         poly_pow = polypow2(poly)
         poly_pow_d = polydiff(poly_pow)
-        roots = get_polyroots(polydiff(poly), boundory)
-        roots = roots[np.where(np.abs(polyval(poly, roots)) >= 1e-6)]
+        roots = get_polyroots(poly_pow_d, boundory)
+        roots = roots[np.where(polyval(polydiff(poly_pow_d), roots) < 0.)]
         if roots.shape[0] == 1:
             out[i] = roots[0]
 
@@ -35,20 +35,21 @@ def get_max_derivatives_abs(poly, boundory):
     return out
 
 #should be parallelized
-# @nb.njit(nb.float64[:,::1](nb.float64[:,::1], nb.float64[:]), fastmath = True, cache = True)
-# def get_max_t(poly, t_augmented):
-#     n = poly.shape[0]
-#     out = np.empty((n,4)).astype(np.float64)
+@nb.njit(nb.float64[:,::1](nb.float64[:,::1], nb.float64[:]), fastmath = True, cache = True)
+def get_max_t(poly, t_augmented):
+    n = poly.shape[0]
+    out = np.empty((n,4)).astype(np.float64)
 
-#     for i in nb.prange(n):
-#         out[i] = get_max_derivatives_abs(poly[i], t_augmented[i:i+2])
-#     return out
+    for i in nb.prange(n):
+        out[i] = get_max_derivatives_abs(poly[i], t_augmented[i:i+2])
+    return out
 
 
 if __name__ == '__main__':
-    n = 31
-    t_points =  np.arange(n,dtype = np.float64)
-    y_points = np.arange(n) + (np.random.random(n)-0.5)*10
+    n =25
+    t_points =  np.linspace(-1,1,n)
+    y_points = np.arange(n) + (np.random.random(n)-0.5)*1
+    # y_points[-1] = 0
     start_derivatives = np.array([0.,0.,0])
     end_derivatives = np.array([0.,10.,0])
 
@@ -63,9 +64,12 @@ if __name__ == '__main__':
     plt.close('all')
     fig, ax = plt.subplots(2,1, sharex = True)
     for i in range(t_augmented.shape[0]-1):
-        x = np.linspace(t_augmented[i],t_augmented[i+1], 500)
-        p2 = polypow2(polys[i,:])
-        # ax[0].plot(x, np.polyval(p2,x))
+        x = np.linspace(t_augmented[i],t_augmented[i+1], 50)
+        p = polys[i]
+
+        p2 = np.convolve(p,p)
+        # p2 = polypow2(polys[i])
+        ax[0].plot(x, np.polyval(p2,x))
         ax[0].plot(x, np.polyval(polys[i,:],x))
         ax[1].plot(x, np.polyval(polys_d[i,:],x))
         ax[1].plot(x, np.polyval(polys_d[i,:],x))
