@@ -45,16 +45,20 @@ def get_polyroots(polynome, boundory):
         roots = np.linalg.eigvals(A)
     else:
         roots = np.zeros(0, dtype=np.complex128)
-    roots = roots[np.less_equal(np.abs(np.imag(roots)), 1e-9)]
+
+    roots = roots[np.less_equal(np.abs(np.imag(roots)), 1e-3)]
+
     roots_real = np.real(roots)
     # add in additional zeros on the end if needed
     if tz > 0:
         roots_real =  np.hstack((roots_real, np.zeros(tz, dtype = cast_t)))
 
-    roots_real = roots_real[np.logical_and(np.less(roots_real, boundory[1]-1e-9),
-                                           np.greater(roots_real, boundory[0]+1e-9))]
-    roots_real = np.hstack((boundory[0:1], roots_real, boundory[1:2]))
+    roots_real = roots_real[np.logical_and(np.less_equal(roots_real, boundory[1] + 1e-9),
+                                            np.greater(roots_real, boundory[0] - 1e-9))]
+
     return np.ascontiguousarray(np.sort(roots_real))
+    # roots_real = np.hstack((boundory[0:1], roots_real, boundory[1:2]))
+    # return np.ascontiguousarray(np.sort(roots_real))
 
 @nb.njit(nb.float64(nb.float64[::1],nb.float64[:]), fastmath = True, cache = True)
 def get_polyroot_max(poly, boundory):

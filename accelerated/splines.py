@@ -61,7 +61,7 @@ def get_A_b_t_augmented(t_points, y_points,
         match last points (-free0 for the first iteration) (-free1 for last two iterations)
         match next poit
         match last 4 Derivatives
-        
+
         match end derivatives [-3:]
     """
     n = t_points.shape[0]
