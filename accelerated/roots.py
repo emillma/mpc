@@ -56,8 +56,22 @@ def get_polyroots(polynome, boundory):
     roots_real = np.hstack((boundory[0:1], roots_real, boundory[1:2]))
     return np.ascontiguousarray(np.sort(roots_real))
 
+@nb.njit(nb.float64(nb.float64[::1],nb.float64[:]), fastmath = True, cache = True)
+def get_polyroot_max(poly, boundory):
+    """
+    get the t E ]boundory[0]; boundory[1]], max poly(t)
+    """
+    n = poly.shape[0]
+    poly_d = poly[:-1] * np.arange(n-1,0,-1).astype(np.float64)
+    roots = get_polyroots(poly_d, boundory)[1:]
+    potentials = (n - np.arange(n)).astype(np.float64).reshape(1,-1)
+    if roots.shape[0] == 1:
+        return roots[0]
+    argmax = np.argmax(np.sum(roots.reshape(-1,1) ** potentials * poly.reshape(1,-1), axis = 1))
+    return roots[argmax]
 
 
 if __name__ == '__main__':
-    poly = np.random.random(6)-0.5
-    print(get_polyroots(poly, np.array([-10.,2.])))
+    poly = np.array([1,0,-3,0], dtype = np.float64)
+    # print(poly.dtype)
+    print(get_polyroot_max(poly, np.array([-1.,1.2])))
