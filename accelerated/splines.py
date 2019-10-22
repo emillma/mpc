@@ -24,6 +24,8 @@ def get_t_augmented(t_points):
     t_augmented[2:-2] = t_points[1:-1]
     t_augmented[-2] = (t_points[-2] + t_points[-1])/2.
     t_augmented[-1] = t_points[-1]
+
+    # t_augmented = np.linspace(t_points[0], t_points[-1], t_points.shape[0]+2)
     return t_augmented
 
 @nb.njit(nb.float64[::1](nb.float64[:], nb.float64[:], nb.float64[:]),

@@ -46,20 +46,21 @@ def get_max_t(poly, t_augmented):
 
 
 if __name__ == '__main__':
-    n =25
-    t_points =  np.linspace(-1,1,n)
-    y_points = np.arange(n) + (np.random.random(n)-0.5)*1
+    n =51
+    t_points =  np.linspace(-1,1,n)*4
+    y_points = np.arange(n) + (np.random.random(n)-0.5)
     # y_points[-1] = 0
     start_derivatives = np.array([0.,0.,0])
-    end_derivatives = np.array([0.,10.,0])
+    end_derivatives = np.array([0.,0.,0])
 
     A, b, t_augmented = splines.get_A_b_t_augmented(t_points, y_points, start_derivatives, end_derivatives)
 
     A_inv = np.linalg.inv(A)
     polys = (A_inv@b)[:-2].reshape(-1,6)
+    polys = np.linalg.solve(A,b)[:-2].reshape(-1,6)
     polys_d = np.vstack([np.polyder(i) for i in polys])
 
-    # max_t = get_max_t(polys, t_augmented)
+    max_t = get_max_t(polys, t_augmented)
 
     plt.close('all')
     fig, ax = plt.subplots(2,1, sharex = True)
@@ -74,7 +75,7 @@ if __name__ == '__main__':
         ax[1].plot(x, np.polyval(polys_d[i,:],x))
         ax[1].plot(x, np.polyval(polys_d[i,:],x))
         # print('h', polys[i])
-        m = get_max_derivatives_abs(polys[i], t_augmented[i:i+2])
+        m = max_t[i]
         m0 = m[0]
         m1 = m[1]
         # ax[0].scatter(max_t[i,0], np.polyval(polys[i,:],max_t[i,0]))
