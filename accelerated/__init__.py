@@ -5,5 +5,4 @@ Created on Thu Oct 17 13:08:07 2019
 
 @author: emil
 """
-
-
+import polynomial_utils

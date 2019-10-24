@@ -12,8 +12,8 @@ from matplotlib import pyplot as plt
 from splines import get_A_b_t_augmented
 from matplotlib import pyplot as plt
 
-n = 3
-t_points =  np.linspace(0,1,n)
+n = 31
+t_points =  np.linspace(1,2,n)
 # t_points = (np.random.random(n) -0.5) * np.random.random(1)*10
 y_points = np.arange(n) + (np.random.random(n)-0.5)
 # y_points[-1] = 0
@@ -29,6 +29,6 @@ start = np.empty(100)
 A_inv = np.linalg.inv(A)
 diff = np.amax(np.amax(np.abs(A_inv),axis = 1) - np.amin(np.abs(A_inv), axis = 1))
 print(diff)
-print(np.linalg.det(A))
+# print(np.linalg.det(A))
 
 # plt.plot(data)

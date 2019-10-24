@@ -16,21 +16,20 @@ import scipy.interpolate
 from polynomial_utils import polyval, polydiff, polypow2
 
 
-@nb.njit(nb.float64[::1](nb.float64[::1],nb.float64[:]), fastmath = True, cache = True)
+@nb.njit(nb.float64[:,::1](nb.float64[::1],nb.float64[:]), fastmath = True, cache = True)
 def get_max_derivatives_abs(poly, boundory):
-    out = np.zeros(4).astype(np.float64)
+    out = np.zeros((2,4)).astype(np.float64)
     for i in range(4):
         poly_pow = polypow2(poly)
         poly_pow_d = polydiff(poly_pow)
         roots = get_polyroots(poly_pow_d, boundory)
         roots = roots[np.where(polyval(polydiff(poly_pow_d), roots) < 0.)]
         if roots.shape[0] == 1:
-            out[i] = roots[0]
+            out[1,i] = roots[0]
 
         elif roots.shape[0] > 1:
-
-            argmax = np.argmax(polyval(poly_pow,roots))
-            out[i] = roots[argmax]
+            roots = np.sort(roots)[-2:]
+            out[:,i] = roots
         poly = polydiff(poly)
     return out
 
@@ -38,17 +37,20 @@ def get_max_derivatives_abs(poly, boundory):
 @nb.njit(nb.float64[:,::1](nb.float64[:,::1], nb.float64[:]), fastmath = True, cache = True)
 def get_max_t(poly, t_augmented):
     n = poly.shape[0]
-    out = np.empty((n,4)).astype(np.float64)
+    out = np.zeros((n,4)).astype(np.float64)
 
-    for i in nb.prange(n):
-        out[i] = get_max_derivatives_abs(poly[i], t_augmented[i:i+2])
+    out[:2] = get_max_derivatives_abs(poly[0], t_augmented[:2])
+    for i in nb.prange(1,n):
+        tmp = get_max_derivatives_abs(poly[i], t_augmented[i:i+2])
+        out[i] = tmp[1]
+        out[i-1] = np.maximum(out[i-1], tmp[0])
     return out
 
 
 if __name__ == '__main__':
-    n =51
-    t_points =  np.linspace(-1,1,n)*4
-    y_points = np.arange(n) + (np.random.random(n)-0.5)
+    n = 17
+    t_points =  np.linspace(0,1,n)
+    y_points = np.arange(n, dtype = np.float64)
     # y_points[-1] = 0
     start_derivatives = np.array([0.,0.,0])
     end_derivatives = np.array([0.,0.,0])
@@ -56,8 +58,10 @@ if __name__ == '__main__':
     A, b, t_augmented = splines.get_A_b_t_augmented(t_points, y_points, start_derivatives, end_derivatives)
 
     A_inv = np.linalg.inv(A)
-    polys = (A_inv@b)[:-2].reshape(-1,6)
-    polys = np.linalg.solve(A,b)[:-2].reshape(-1,6)
+    A_inv_max = np.amax(np.abs(A_inv))
+    A_inv = A_inv / A_inv_max
+    polys = (A_inv@b).reshape(-1,6)
+    # polys = np.linalg.solve(A,b)[:-2].reshape(-1,6)
     polys_d = np.vstack([np.polyder(i) for i in polys])
 
     max_t = get_max_t(polys, t_augmented)
@@ -68,11 +72,9 @@ if __name__ == '__main__':
         x = np.linspace(t_augmented[i],t_augmented[i+1], 50)
         p = polys[i]
 
-        p2 = np.convolve(p,p)
-        # p2 = polypow2(polys[i])
+        p2 = polypow2(polys[i])
         ax[0].plot(x, np.polyval(p2,x))
         ax[0].plot(x, np.polyval(polys[i,:],x))
-        ax[1].plot(x, np.polyval(polys_d[i,:],x))
         ax[1].plot(x, np.polyval(polys_d[i,:],x))
         # print('h', polys[i])
         m = max_t[i]

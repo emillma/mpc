@@ -44,9 +44,9 @@ def get_polyroots(polynome, boundory):
         A[0, :] = -p[1:] / p[0]  # normalize
         roots = np.linalg.eigvals(A)
     else:
-        roots = np.zeros(0, dtype=np.complex128)
+        roots = np.zeros(0).astype(np.complex128)
 
-    roots = roots[np.less_equal(np.abs(np.imag(roots)), 1e-3)]
+    roots = roots[np.less_equal(np.abs(np.imag(roots)), 1e-2)]
 
     roots_real = np.real(roots)
     # add in additional zeros on the end if needed
