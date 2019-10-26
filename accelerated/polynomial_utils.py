@@ -20,9 +20,7 @@ def polyval(poly,x):
 def polydiff(poly):
     return poly[:-1] * (poly.shape[0] - np.arange(poly.shape[0])[1:])
 
-# @nb.njit(nb.float64[::1](nb.float64[::1]), fastmath = True, cache = True)
-# def polypow2(poly):
-#     return np.ascontiguousarray(np.convolve(poly, poly))
+
 @nb.njit(nb.float64[::1](nb.float64[::1]), cache = True, parallel = True)
 def polypow2(poly):
     out = np.empty(poly.shape[0]*2-1).astype(np.float64)
@@ -32,6 +30,14 @@ def polypow2(poly):
     for i in nb.prange(poly.shape[0]*2-1):
         out[i] = np.sum(padded[i:i+poly.shape[0]] * flipped)
     return out
+
+def B2polys(B, c, t_points, p = 5):
+    n = B.shape[0]
+    B = B * c.reshape(-1,1,1)
+    args1 = (np.arange(n).reshape(-1,1) + np.arange(p+1).reshape(1,-1))[:-2*p]
+    args2 = p-np.arange(p+1).reshape(1,-1)
+    s = np.sum(B[args1, args2],axis = 1)
+    return s
 
 if __name__ == '__main__':
     poly = np.random.random(6)-0.5
