@@ -10,7 +10,7 @@ sys.path.insert(1, 'accelerated')
 import numpy as np
 from matplotlib import pyplot as plt
 import sympy as sp
-from polynomial_utils import polyval, polydiff, B2polys
+from polynomial_utils import polyval, polydiff, B2polys, basepolys
 
 
 # def B(i, p, t, x_inter):
@@ -39,27 +39,35 @@ def B(i, p, t, k):
 
 if __name__ == '__main__':
     plt.close('all')
-    fig, ax = plt.subplots(3, 1, sharex = True)
+    fig, ax = plt.subplots(6, 1, sharex = True)
     x = sp.symbols('x', real = True)
-    n = 2
+    n = 10
+    p =5
 
-    for p in [2]:
-        t_points = (np.arange(n + 2*p+1,dtype = np.float64) - p)
-        # t_points[p + n//2:] += 5
-        polys = np.zeros((n+p,p+1,p+1), dtype = np.float64)
-        for i in range(0,n+p):
-            for j, k in enumerate(range(i,min(i+p+1, n+p*2))):
-                a = B(i,p,t_points, k)
-                a_p = sp.Poly(a,x)
-                polys[i, k-i, :] = a_p.all_coeffs()
+    t_points = (np.arange(n + 2*p+1,dtype = np.float64) - p)
+    # t_points[p + n//2:] += 5
+    # polys = np.zeros((n+p,p+1,p+1), dtype = np.float64)
+    # for i in range(0,n+p):
+    #     for j, k in enumerate(range(i,min(i+p+1, n+p*2))):
+    #         a = B(i,p,t_points, k)
+    #         a_p = sp.Poly(a,x)
+    #         polys[i, k-i, :] = a_p.all_coeffs()
 
 
-
+    polys = basepolys(t_points, p)
     # for plot_i, data in enumerate(datas):
     # assert 0
     # s = B2polys(polys, np.ones(polys.shape[0]), t_points, 1)
-    # c = np.ones(polys.shape[0])
-    # ax[0].scatter(t_points[:-1], c)
+    c = np.random.random(polys.shape[0])
+    ax[0].scatter((t_points[:-1-p] + t_points[p+1:])/2., c)
+    s = B2polys(polys, c, t_points, p)
+
+    for t_i, poly in enumerate(s):
+        t0 = t_points[t_i + p]
+        t1 = t_points[t_i + p + 1]
+        x_ = np.linspace(t0, t1, 100)
+        ax[0].plot(x_,polyval(poly, x_))
+
 
 
     for t_i,p_tmp in enumerate(polys):
@@ -71,14 +79,12 @@ if __name__ == '__main__':
 
                 x_ = np.linspace(t0, t1, 100)
                 y1 = polyval(poly, x_)
-                poly_d = polydiff(poly)
-                y2 = polyval(poly_d, x_)
-                y3 = polyval(polydiff(poly_d), x_)
-                ax[0].plot(x_, y1)
-                ax[1].plot(x_, y2)
-                ax[2].plot(x_, y3)
-    # polys = data[0]
 
+                ax[1].plot(x_, y1)
+                for d in range(4):
+                    poly = polydiff(poly)
+                    y = polyval(poly, x_)
+                    ax[2+d].plot(x_, y)
 
 
 
