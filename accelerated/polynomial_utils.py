@@ -16,9 +16,20 @@ def polyval(poly,x):
     # return x.reshape(-1,1)**(poly.shape[0]-1 - np.arange(poly.shape[0]).astype(np.float64))
     return np.sum(poly.reshape(-1,1)* x.reshape(1,-1)**(poly.shape[0]-1 - np.arange(poly.shape[0]).astype(np.float64)).reshape(-1,1), axis = 0)
 
-@nb.njit(nb.float64[::1](nb.float64[:]), fastmath = True, parallel = True)
+
+
+@nb.njit(nb.float64[::1](nb.float64[::1]),
+          fastmath = True, parallel = True, cache = True)
 def polydiff(poly):
     return poly[:-1] * (poly.shape[0] - np.arange(poly.shape[0])[1:])
+
+@nb.njit(nb.float64[::1](nb.float64[::1], nb.int64),
+          fastmath = True, cache = True)
+def polydiff_d(poly, d):
+    for i in range(d):
+        poly = polydiff(poly)
+    return poly
+
 
 
 @nb.njit(nb.float64[::1](nb.float64[::1]), cache = True, parallel = True)

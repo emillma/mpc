@@ -10,7 +10,7 @@ sys.path.insert(1, 'accelerated')
 import numpy as np
 from matplotlib import pyplot as plt
 import sympy as sp
-from polynomial_utils import polyval, polydiff, B2polys, basepolys
+from polynomial_utils import polyval, polydiff, B2polys, basepolys, polydiff_d
 
 
 # def B(i, p, t, x_inter):
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     p =5
 
     t_points = (np.arange(n + 2*p+1,dtype = np.float64) - p)
-    # t_points[p + n//2:] += 5
+    t_points[p + n//2+1:] += 5
     # polys = np.zeros((n+p,p+1,p+1), dtype = np.float64)
     # for i in range(0,n+p):
     #     for j, k in enumerate(range(i,min(i+p+1, n+p*2))):
@@ -58,15 +58,14 @@ if __name__ == '__main__':
     # for plot_i, data in enumerate(datas):
     # assert 0
     # s = B2polys(polys, np.ones(polys.shape[0]), t_points, 1)
-    c = np.random.random(polys.shape[0])
-    ax[0].scatter((t_points[:-1-p] + t_points[p+1:])/2., c)
+    c = np.arange(polys.shape[0], dtype= np.float64)
     s = B2polys(polys, c, t_points, p)
 
     for t_i, poly in enumerate(s):
         t0 = t_points[t_i + p]
         t1 = t_points[t_i + p + 1]
         x_ = np.linspace(t0, t1, 100)
-        ax[0].plot(x_,polyval(poly, x_))
+        ax[0].plot(x_,polyval(polydiff(poly), x_))
 
 
 
@@ -82,8 +81,8 @@ if __name__ == '__main__':
 
                 ax[1].plot(x_, y1)
                 for d in range(4):
-                    poly = polydiff(poly)
-                    y = polyval(poly, x_)
+                    p_d = polydiff_d(poly, d+1)
+                    y = polyval(p_d, x_)
                     ax[2+d].plot(x_, y)
 
 
