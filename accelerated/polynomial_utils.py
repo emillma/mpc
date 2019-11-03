@@ -44,7 +44,7 @@ def polypow2(poly):
 
 @nb.njit(nb.float64[:,::1](nb.float64[:,:,:], nb.float64[::1], nb.float64[:], nb.int64),
          parallel = True,fastmath = True, cache = True)
-def B2polys(B, c, t_points, p = 5):
+def get_polys_from_bases(B, c, t_points, p = 5):
     n = B.shape[0]
     B = B * c.reshape(-1,1,1)
     args1 = (np.arange(n).reshape(-1,1) + np.arange(p+1).reshape(1,-1))[:-p]
@@ -58,7 +58,7 @@ def B2polys(B, c, t_points, p = 5):
 
 @nb.njit(nb.float64[:,:,::1](nb.float64[::1], nb.int64),
          cache = True, fastmath = True)
-def basepolys(t_points, p):
+def get_bases(t_points, p):
     t_points = t_points.reshape(-1,1,1)
     n = t_points.shape[0] -1
     B = np.zeros((n,1,1)).astype(np.float64)
