@@ -11,7 +11,7 @@ import numba as nb
 import numpy as np
 
 
-@nb.njit(nb.float64[::1](nb.float64[::1], nb.float64[::1]), fastmath = True, parallel = True)
+@nb.njit(nb.float64[::1](nb.float64[::1], nb.float64[::1]), fastmath = True)
 def polyval(poly,x):
     # return x.reshape(-1,1)**(poly.shape[0]-1 - np.arange(poly.shape[0]).astype(np.float64))
     return np.sum(poly.reshape(-1,1)* x.reshape(1,-1)**(poly.shape[0]-1 - np.arange(poly.shape[0]).astype(np.float64)).reshape(-1,1), axis = 0)
@@ -19,7 +19,7 @@ def polyval(poly,x):
 
 
 @nb.njit(nb.float64[::1](nb.float64[::1]),
-          fastmath = True, parallel = True, cache = True)
+          fastmath = True, cache = True)
 def polydiff(poly):
     return poly[:-1] * (poly.shape[0] - np.arange(poly.shape[0])[1:])
 

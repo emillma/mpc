@@ -9,12 +9,9 @@ Created on Mon Nov  4 14:01:10 2019
 
 import numpy as np
 from polynomial_utils import polydiff_d, get_bases, polyval, get_polys_from_bases
-from matplotlib import pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-
 import numba as nb
 
-@nb.njit(nb.types.Tuple((nb.float64[:,::1], nb.float64[:]))(nb.float64[:], nb.float64[:],nb.float64[:], nb.float64[:,:]),
+@nb.njit(nb.types.Tuple((nb.float64[:,::1], nb.float64[::1]))(nb.float64[:], nb.float64[:],nb.float64[:], nb.float64[:,:]),
          cache = True, fastmath = True)
 def get_path_from_tunables(start, end, gates, tunables):
 # if True:
@@ -76,7 +73,7 @@ def get_path_from_tunables(start, end, gates, tunables):
 
 
 
-@nb.njit(nb.types.Tuple((nb.float64[:,::1], nb.float64[:], nb.float64[:,::1]))(nb.float64[:], nb.float64[:], nb.float64[:], nb.int64),
+@nb.njit(nb.types.Tuple((nb.float64[:,::1], nb.float64[::1], nb.float64[:,::1]))(nb.float64[:], nb.float64[:], nb.float64[:], nb.int64),
          cache = True, fastmath = True)
 def get_initial_path_1d(start, end, gates, tunables_n):
     tunables = np.zeros((gates.shape[0] +1, tunables_n)).astype(np.float64)
@@ -91,18 +88,24 @@ def get_initial_path_1d(start, end, gates, tunables_n):
     s, lbda_points = get_path_from_tunables(start, end, gates, tunables)
     return s, lbda_points, tunables
 
-# @nb.njit(nb.types.Tuple((nb.float64[:,:,::1], nb.float64[:]))(nb.float64[:,::1],nb.float64[:,::1],nb.float64[:,::1]),
-#                         cache = True)
+
+
+@nb.njit(nb.types.Tuple((nb.float64[:,:,::1], nb.float64[:],nb.float64[:,:,::1]))(nb.float64[:,::1],nb.float64[:,::1],nb.float64[:,::1]),
+                        cache = True, parallel = True)
 def get_initial_path(start, end, gates):
     tunables_n = 5
     s = np.empty((3, 8 + gates.shape[1] * 6, 6))
     tunables = np.empty((3, gates.shape[1] + 1 , tunables_n))
-    print(s.shape)
+    lbda_points = np.empty((3, 19 + gates.shape[1] * 6))
     for i in nb.prange(3):
-        s[i], lbda_points, tunables[i] = get_initial_path_1d(start[i], end[i], gates[i], tunables_n)
-    return (s, lbda_points, tunables)
+        s[i], lbda_points[i], tunables[i] = get_initial_path_1d(start[i], end[i], gates[i], tunables_n)
+    return (s, lbda_points[0], tunables)
 
 if __name__ == '__main__':
+    a = np.array([get_initial_path_1d], dtype = type(get_initial_path_1d))
+    from matplotlib import pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D
+
     gates_n = 5
     start = np.zeros((3,4)).astype(np.float64)
     end = np.zeros((3,4)).astype(np.float64)
