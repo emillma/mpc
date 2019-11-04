@@ -10,6 +10,8 @@ Created on Mon Nov  4 14:01:10 2019
 import numpy as np
 from polynomial_utils import polydiff_d, get_bases, polyval, get_polys_from_bases
 from matplotlib import pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
 import numba as nb
 
 @nb.njit(nb.types.Tuple((nb.float64[:,::1], nb.float64[:]))(nb.float64[:], nb.float64[:],nb.float64[:], nb.float64[:,:]),
@@ -72,10 +74,11 @@ def get_path_from_tunables(start, end, gates, tunables):
 
     return get_polys_from_bases(bases, scaling, lbda_points, p), lbda_points
 
-@nb.njit(nb.types.Tuple((nb.float64[:,::1], nb.float64[:], nb.float64[:,::1]))(nb.float64[:], nb.float64[:], nb.float64[:]),
+
+
+@nb.njit(nb.types.Tuple((nb.float64[:,::1], nb.float64[:], nb.float64[:,::1]))(nb.float64[:], nb.float64[:], nb.float64[:], nb.int64),
          cache = True, fastmath = True)
-def get_initial_path(start, end, gates):
-    tunables_n = 5
+def get_initial_path_1d(start, end, gates, tunables_n):
     tunables = np.zeros((gates.shape[0] +1, tunables_n)).astype(np.float64)
     if gates.shape[0] == 0:
         tunables[0] = np.linspace(start[0], end[0], tunables_n +2)[1:-1]
@@ -88,30 +91,37 @@ def get_initial_path(start, end, gates):
     s, lbda_points = get_path_from_tunables(start, end, gates, tunables)
     return s, lbda_points, tunables
 
+# @nb.njit(nb.types.Tuple((nb.float64[:,:,::1], nb.float64[:]))(nb.float64[:,::1],nb.float64[:,::1],nb.float64[:,::1]),
+#                         cache = True)
+def get_initial_path(start, end, gates):
+    tunables_n = 5
+    s = np.empty((3, 8 + gates.shape[1] * 6, 6))
+    tunables = np.empty((3, gates.shape[1] + 1 , tunables_n))
+    print(s.shape)
+    for i in nb.prange(3):
+        s[i], lbda_points, tunables[i] = get_initial_path_1d(start[i], end[i], gates[i], tunables_n)
+    return (s, lbda_points, tunables)
 
 if __name__ == '__main__':
-    start    = np.array([0.,-1.,0.,0.], dtype = np.float64)
-    end      = np.array([0.,0.,0.,0.], dtype = np.float64)
-    gates_n = 2
-    tunables = np.random.random((gates_n,5)).astype(np.float64)
-
-
-    gates    = np.array([1.,2.,1.])
+    gates_n = 5
+    start = np.zeros((3,4)).astype(np.float64)
+    end = np.zeros((3,4)).astype(np.float64)
+    gates = np.random.random((3,gates_n))
 
     s, lbda_points, tunables = get_initial_path(start, end, gates)
     p = 5
 
     plt.close('all')
-    fig, ax = plt.subplots(5, 1, sharex = True)
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
 
-    for t_i, poly in enumerate(s):
-            t0 = lbda_points[t_i + p]
-            t1 = lbda_points[t_i + p + 1]
-            x_ = np.linspace(t0, t1, 100)
-            ax[0].plot(x_,polyval(poly, x_))
-            ax[1].plot(x_,polyval(polydiff_d(poly,1), x_))
-            ax[2].plot(x_,polyval(polydiff_d(poly,2), x_))
-            ax[3].plot(x_,polyval(polydiff_d(poly,3), x_))
-            ax[4].plot(x_,polyval(polydiff_d(poly,4), x_))
+    for i in range(s.shape[1]):
+        t0 = lbda_points[i + p]
+        t1 = lbda_points[i + p + 1]
+        print(t0)
+        t_ = np.linspace(t0, t1, 100)
+        ax.plot(polyval(s[0,i], t_),polyval(s[1,i], t_),polyval(s[2,i], t_))
+        if (i-1)%6 == 0:
+            ax.scatter(polyval(s[0,i], np.array([t0])),polyval(s[1,i], np.array([t0])),polyval(s[2,i], np.array([t0])))
 
 
