@@ -8,7 +8,8 @@ Created on Mon Nov  4 14:01:10 2019
 
 
 import numpy as np
-from polynomial_utils import polydiff_d, get_bases, polyval, get_polys_from_bases
+from accelerated.polynomial_utils import polydiff_d, polyval
+from accelerated.spline_utils import get_bases, get_polys_from_bases
 import numba as nb
 
 @nb.njit(nb.types.Tuple((nb.float64[:,::1], nb.float64[::1]))(nb.float64[:], nb.float64[:],nb.float64[:], nb.float64[:,:]),
@@ -91,15 +92,18 @@ def get_initial_path_1d(start, end, gates, tunables_n):
 
 
 @nb.njit(nb.types.Tuple((nb.float64[:,:,::1], nb.float64[:],nb.float64[:,:,::1]))(nb.float64[:,::1],nb.float64[:,::1],nb.float64[:,::1]),
-                        cache = True, parallel = True)
+                        cache = True)
 def get_initial_path(start, end, gates):
     tunables_n = 5
+    tuntest = np.array([5,5,5]). astype(np.int64)
     s = np.empty((3, 8 + gates.shape[1] * 6, 6))
     tunables = np.empty((3, gates.shape[1] + 1 , tunables_n))
     lbda_points = np.empty((3, 19 + gates.shape[1] * 6))
     for i in nb.prange(3):
-        s[i], lbda_points[i], tunables[i] = get_initial_path_1d(start[i], end[i], gates[i], tunables_n)
+        s[i], lbda_points[i], tunables[i] = get_initial_path_1d(start[i], end[i], gates[i], tuntest[i])
     return (s, lbda_points[0], tunables)
+
+
 
 if __name__ == '__main__':
     a = np.array([get_initial_path_1d], dtype = type(get_initial_path_1d))
@@ -107,11 +111,15 @@ if __name__ == '__main__':
     from mpl_toolkits.mplot3d import Axes3D
 
     gates_n = 5
+
     start = np.zeros((3,4)).astype(np.float64)
     end = np.zeros((3,4)).astype(np.float64)
     gates = np.random.random((3,gates_n))
-
     s, lbda_points, tunables = get_initial_path(start, end, gates)
+
+
+
+
     p = 5
 
     plt.close('all')

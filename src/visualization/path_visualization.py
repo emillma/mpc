@@ -21,3 +21,10 @@ def plot_path(ax, path, time_points):
         if (i-1)%6 == 0:
             ax.scatter(np.polyval(path[0,i], np.array([t0])),np.polyval(path[1,i], np.array([t0])),np.polyval(path[2,i], np.array([t0])))
 
+
+
+def plot_bases(ax, bases, lbda_points):
+    for i in range(bases.shape[0]):
+        for j in range(bases.shape[1]):
+            t_ = np.linspace(lbda_points[i+j],lbda_points[i+j+1], 100)
+            ax.plot(t_, np.polyval(bases[i,j], t_))
